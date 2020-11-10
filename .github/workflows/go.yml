@@ -16,36 +16,6 @@ jobs:
 
       - name: build
         run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build  --tags "linux" -o ./compressImg ./cmd/main.go
-      - name: SCP Upload
-        # You may pin to the exact commit or the version.
-        # uses: betanzos/scp-upload@4afbc824f4b0940d2b1ae862590033424385e3ab
-        uses: betanzos/scp-upload@v1
-        with:
-          # Source local file path
-          source: ./compressImg
-          # Remote host
-          host: ${{ secrets.SSH_ADDR }}
-          # Remote host SSH port
-          port: 22 # optional, default is 22
-          # Remote host username
-          username: root
-          # SSH private key
-          key: ${{ secrets.SSH_KEY }}
-          # Remote directory to copy the file
-          remote_dir: /data/zentao # optional, default is ~
-      - name: SSH Execute Commands
-        # You may pin to the exact commit or the version.
-        # uses: JimCronqvist/action-ssh@1c03e01b4ac39da814b45cfd2924c2df0ff1396f
-        uses: JimCronqvist/action-ssh@0.1.1
-        with:
-          # Command(s) to execute on the remote server.
-          command: pwd;cd /data/zentao;mkdir ttt;echo "haha"
-          # Hostname or IP address of the remote server(s). Separate multiple servers with a blank space. Example: 'user@mydomain.com:22 user@otherdomain.com:2222'
-          hosts: "root@${{ secrets.SSH_ADDR }}"
-          # The private key (id_rsa) content for authenticating to the SSH server(s). Recommended to store it as a GitHub Secret.
-          privateKey: ${{ secrets.SSH_KEY }}
-          # Used to view all environment variables in the logs, please note that this could expose sensitive data.
-          debug: # optional
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.0
         with:

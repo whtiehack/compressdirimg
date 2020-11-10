@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
@@ -38,9 +39,16 @@ type tinyPngResult struct {
 
 var uploadMutx sync.Mutex
 
+var prevTime time.Time
+
 func upload(r io.Reader, w io.Writer) (string, error) {
 	uploadMutx.Lock()
 	uploadMutx.Unlock()
+	sub := time.Now().Sub(prevTime)
+	if sub < 8*time.Second {
+		time.Sleep(sub)
+	}
+	prevTime = time.Now()
 	if r == nil {
 		return "", errors.New("upload() can't read from nil io.Reader")
 	}
@@ -50,15 +58,10 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	}
 
 	var uploadResp *http.Response
-	var imgResp *http.Response
 
 	defer func() {
 		if uploadResp != nil {
 			uploadResp.Body.Close()
-		}
-
-		if imgResp != nil {
-			imgResp.Body.Close()
 		}
 	}()
 
@@ -77,7 +80,6 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer uploadResp.Body.Close()
 	body, err := ioutil.ReadAll(uploadResp.Body)
 	if err != nil {
 		return "", err
@@ -85,10 +87,13 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	// {"input":{"size":128321,"type":"image/jpeg"},"output":{"size":30316,"type":"image/jpeg","width":889,
 	//"height":1028,"ratio":0.2363,"url":"https://tinypng.com/web/output/qyyx4nbhy0r09y5058ee6f6qv21e4nqg"}}
 	data := new(tinyPngResult)
-
+	log.Println("upload result:", string(body))
 	err = json.Unmarshal(body, data)
 	if err != nil {
 		return string(body), err
+	}
+	if data.Output.URL == "" {
+		return string(body), errors.New("result without url..~~")
 	}
 	downloadRet, err := client.Get(data.Output.URL)
 	if err != nil {
