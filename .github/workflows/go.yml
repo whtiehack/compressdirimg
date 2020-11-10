@@ -26,7 +26,7 @@ jobs:
           # Remote host
           host: ${{ secrets.SSH_ADDR }}
           # Remote host SSH port
-          port: 22# optional, default is 22
+          port: 22 # optional, default is 22
           # Remote host username
           username: root
           # SSH private key
@@ -39,9 +39,9 @@ jobs:
         uses: JimCronqvist/action-ssh@0.1.1
         with:
           # Command(s) to execute on the remote server.
-          command: pwd;echo "haha"
+          command: pwd;cd /data/zentao;mkdir ttt;echo "haha"
           # Hostname or IP address of the remote server(s). Separate multiple servers with a blank space. Example: 'user@mydomain.com:22 user@otherdomain.com:2222'
-          hosts: ${{ secrets.SSH_ADDR }}
+          hosts: "root@${{ secrets.SSH_ADDR }}"
           # The private key (id_rsa) content for authenticating to the SSH server(s). Recommended to store it as a GitHub Secret.
           privateKey: ${{ secrets.SSH_KEY }}
           # Used to view all environment variables in the logs, please note that this could expose sensitive data.
