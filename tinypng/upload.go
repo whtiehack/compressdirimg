@@ -46,7 +46,7 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	uploadMutx.Unlock()
 	sub := time.Now().Sub(prevTime)
 	if sub < 8*time.Second {
-		time.Sleep(sub)
+		time.Sleep(8*time.Second - sub)
 	}
 	prevTime = time.Now()
 	if r == nil {
