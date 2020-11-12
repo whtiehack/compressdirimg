@@ -117,10 +117,13 @@ func uploadProcess(event watcher.Event, m map[string]bool) {
 			time.Sleep(30 * time.Second)
 			continue
 		}
+		log.Println("file compress success", event.Path,
+			"size", lenReadable(int(event.FileInfo.Size()), 2),
+			"new size", lenReadable(len(ret), 2),
+		)
 		err = ioutil.WriteFile(event.Path, ret, os.ModePerm)
 		break
 	}
-	log.Println("file compress success", event.Path)
 	mapMutex.Lock()
 	defer mapMutex.Unlock()
 	delete(m, event.Path)
