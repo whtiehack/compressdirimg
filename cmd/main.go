@@ -110,7 +110,7 @@ func uploadProcess(event watcher.Event, m map[string]bool) {
 	for {
 		ret, err := tinypng.Compress(event.Path)
 		if err != nil {
-			log.Println("compress err", err)
+			log.Println("compress err", event.Path, err)
 			if err.Error() == "Unsupported media type" {
 				break
 			}
