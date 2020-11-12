@@ -35,6 +35,8 @@ type tinyPngResult struct {
 		URL    string  `json:"url"`
 		Width  int64   `json:"width"`
 	} `json:"output"`
+	Error   string `json:"error"`
+	Message string `json:"message"`
 }
 
 var uploadMutx sync.Mutex
@@ -91,6 +93,9 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	err = json.Unmarshal(body, data)
 	if err != nil {
 		return string(body), err
+	}
+	if data.Error == "Unsupported media type" {
+		return "", errors.New(data.Error)
 	}
 	if data.Output.URL == "" {
 		return string(body), errors.New("result without url..~~")

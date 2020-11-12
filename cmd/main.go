@@ -3,10 +3,12 @@ package main
 import (
 	"compressDirImg/tinypng"
 	"flag"
+	"fmt"
 	"github.com/radovskyb/watcher"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -37,6 +39,7 @@ func compressAllFile(pathname string) {
 			ret, err := tinypng.Compress(p)
 			if err != nil {
 				log.Println("ERRRR ", err)
+				log.Println("ERRRR## ", err.Error() == "Unsupported media type")
 			} else {
 				err = ioutil.WriteFile(p, ret, os.ModePerm)
 				if err != nil {
@@ -87,7 +90,7 @@ var mapMutex sync.Mutex
 func processEvent(event watcher.Event, m map[string]bool) {
 	mapMutex.Lock()
 	defer mapMutex.Unlock()
-	log.Println("path", event.Path, "name", event.Name(), "fileinfo", event.FileInfo) // Print the event's info.
+	log.Println("path", event.Path, "name", event.Name(), "size", lenReadable(int(event.Size()), 2)) // Print the event's info.
 	if !event.FileInfo.IsDir() && !m[event.Path] &&
 		event.FileInfo.Size() < MaxFileSize && event.FileInfo.Size() > 10000 {
 		err := tinypng.IsImage(event.Path)
@@ -108,6 +111,9 @@ func uploadProcess(event watcher.Event, m map[string]bool) {
 		ret, err := tinypng.Compress(event.Path)
 		if err != nil {
 			log.Println("compress err", err)
+			if err.Error() == "Unsupported media type" {
+				break
+			}
 			time.Sleep(30 * time.Second)
 			continue
 		}
@@ -118,4 +124,65 @@ func uploadProcess(event watcher.Event, m map[string]bool) {
 	mapMutex.Lock()
 	defer mapMutex.Unlock()
 	delete(m, event.Path)
+}
+
+const (
+	TB = 1000000000000
+	GB = 1000000000
+	MB = 1000000
+	KB = 1000
+)
+
+func lenReadable(length int, decimals int) (out string) {
+	var unit string
+	var i int
+	var remainder int
+
+	// Get whole number, and the remainder for decimals
+	if length > TB {
+		unit = "TB"
+		i = length / TB
+		remainder = length - (i * TB)
+	} else if length > GB {
+		unit = "GB"
+		i = length / GB
+		remainder = length - (i * GB)
+	} else if length > MB {
+		unit = "MB"
+		i = length / MB
+		remainder = length - (i * MB)
+	} else if length > KB {
+		unit = "KB"
+		i = length / KB
+		remainder = length - (i * KB)
+	} else {
+		return strconv.Itoa(length) + " B"
+	}
+
+	if decimals == 0 {
+		return strconv.Itoa(i) + " " + unit
+	}
+
+	// This is to calculate missing leading zeroes
+	width := 0
+	if remainder > GB {
+		width = 12
+	} else if remainder > MB {
+		width = 9
+	} else if remainder > KB {
+		width = 6
+	} else {
+		width = 3
+	}
+
+	// Insert missing leading zeroes
+	remainderString := strconv.Itoa(remainder)
+	for iter := len(remainderString); iter < width; iter++ {
+		remainderString = "0" + remainderString
+	}
+	if decimals > len(remainderString) {
+		decimals = len(remainderString)
+	}
+
+	return fmt.Sprintf("%d.%s %s", i, remainderString[:decimals], unit)
 }
