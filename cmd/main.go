@@ -70,7 +70,7 @@ func main() {
 				if !ok {
 					return
 				}
-				processEvent(event, m)
+				go processEvent(event, m)
 			case err, ok := <-w.Error:
 				if !ok {
 					return
@@ -95,6 +95,8 @@ var mapMutex sync.Mutex
 func processEvent(event watcher.Event, m map[string]bool) {
 	mapMutex.Lock()
 	defer mapMutex.Unlock()
+	// keep to check file write ended
+	time.Sleep(1 * time.Second)
 	log.Println("path", event.Path, "name", event.Name(), "size", lenReadable(int(event.Size()), 2)) // Print the event's info.
 	if !event.FileInfo.IsDir() && !m[event.Path] &&
 		event.FileInfo.Size() < MaxFileSize && event.FileInfo.Size() > 10000 {
@@ -105,13 +107,14 @@ func processEvent(event watcher.Event, m map[string]bool) {
 		}
 		// 检查文件类型
 		m[event.Path] = true
-		go uploadProcess(event, m)
+		uploadProcess(event)
 	} else {
 		log.Println("file created:", event)
 	}
+	delete(m, event.Path)
 }
 
-func uploadProcess(event watcher.Event, m map[string]bool) {
+func uploadProcess(event watcher.Event) {
 	for {
 		ret, err := tinypng.Compress(event.Path)
 		if err != nil {
@@ -122,16 +125,18 @@ func uploadProcess(event watcher.Event, m map[string]bool) {
 			time.Sleep(30 * time.Second)
 			continue
 		}
+		fi, err := os.Stat(event.Path)
+		if err == nil {
+			event.FileInfo = fi
+		}
 		log.Println("file compress success", event.Path,
 			"size", lenReadable(int(event.FileInfo.Size()), 2),
 			"new size", lenReadable(len(ret), 2),
+			err,
 		)
 		err = ioutil.WriteFile(event.Path, ret, os.ModePerm)
 		break
 	}
-	mapMutex.Lock()
-	defer mapMutex.Unlock()
-	delete(m, event.Path)
 }
 
 const (
