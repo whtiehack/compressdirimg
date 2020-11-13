@@ -2,9 +2,9 @@ package main
 
 import (
 	"compressDirImg/tinypng"
+	"compressDirImg/watcher"
 	"flag"
 	"fmt"
-	"github.com/radovskyb/watcher"
 	"io/ioutil"
 	"log"
 	"os"
@@ -61,17 +61,21 @@ func main() {
 	compressAllFile(*dir)
 	w := watcher.New()
 	// Only notify rename and move events.
-	w.FilterOps(watcher.Create)
+	w.FilterOps(nil)
 	go func() {
 		m := map[string]bool{}
 		for {
 			select {
-			case event := <-w.Event:
+			case event, ok := <-w.Event:
+				if !ok {
+					return
+				}
 				processEvent(event, m)
-			case err := <-w.Error:
+			case err, ok := <-w.Error:
+				if !ok {
+					return
+				}
 				log.Fatalln(err)
-			case <-w.Closed:
-				return
 			}
 		}
 	}()
@@ -79,6 +83,7 @@ func main() {
 	if err := w.AddRecursive(*dir); err != nil {
 		log.Fatalln(err)
 	}
+	log.Println("start watching")
 	// Start the watching process - it'll check for changes every 100ms.
 	if err := w.Start(time.Millisecond * 100); err != nil {
 		log.Fatalln(err)
@@ -95,7 +100,7 @@ func processEvent(event watcher.Event, m map[string]bool) {
 		event.FileInfo.Size() < MaxFileSize && event.FileInfo.Size() > 10000 {
 		err := tinypng.IsImage(event.Path)
 		if err != nil {
-			log.Println("is not an image", event.Path, err)
+			log.Println("is not an image?", event.Path, err)
 			return
 		}
 		// 检查文件类型
