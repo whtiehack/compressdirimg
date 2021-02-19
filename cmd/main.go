@@ -21,13 +21,16 @@ const MaxFileSize = 5 * 1024 * 1024
 
 func compressAllFile(pathname string) {
 	rd, _ := ioutil.ReadDir(pathname)
+	// ignore before 20 days
+	zt := time.Now().AddDate(0, 0, -20)
 	for _, fi := range rd {
 		if fi.IsDir() {
 			log.Printf("[%s]\n", pathname+"/"+fi.Name())
 			compressAllFile(pathname + "/" + fi.Name())
 		} else {
 			log.Println(pathname, fi.Name())
-			if fi.Size() > MaxFileSize {
+			// ignore large file and small file.
+			if fi.Size() > MaxFileSize || fi.Size() <= 10000 || fi.ModTime().Before(zt) {
 				continue
 			}
 			p := pathname + "/" + fi.Name()
