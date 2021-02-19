@@ -100,10 +100,20 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	if data.Output.URL == "" {
 		return string(body), errors.New("result without url..~~")
 	}
-	downloadRet, err := client.Get(data.Output.URL)
+	getRequest, err := http.NewRequest("GET", data.Output.URL, nil)
+	if err != nil {
+		return "", err
+	}
+	getRequest.Header.Set("Accept", "*/*")
+	getRequest.Header.Set("Accept-Encoding", "gzip, deflate")
+	getRequest.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+	getRequest.Header.Set("Referer", "https://tinypng.com/")
+	getRequest.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15")
+	downloadRet, err := client.Do(getRequest)
 	if err != nil {
 		return string(body), err
 	}
 	defer downloadRet.Body.Close()
+	log.Println("download success", data.Output.URL)
 	return copyAndMd5(w, downloadRet.Body)
 }
