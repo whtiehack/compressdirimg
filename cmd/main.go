@@ -115,6 +115,7 @@ func processEvent(event watcher.Event, m map[string]bool) {
 }
 
 func uploadProcess(event watcher.Event) {
+	tryCount := 0
 	for {
 		ret, err := tinypng.Compress(event.Path)
 		if err != nil {
@@ -122,7 +123,12 @@ func uploadProcess(event watcher.Event) {
 			if err.Error() == "Unsupported media type" {
 				break
 			}
+			if tryCount > 4 {
+				log.Println("try count > 4", event.Path)
+				break
+			}
 			time.Sleep(30 * time.Second)
+			tryCount++
 			continue
 		}
 		fi, err := os.Stat(event.Path)
