@@ -21,6 +21,10 @@ var client = &http.Client{
 	Timeout: 30 * time.Second, // timeout -> 30秒
 	Jar:     newCookie(),
 }
+var downloadClient = &http.Client{
+	Timeout: 30 * time.Second, // timeout -> 30秒
+	Jar:     newCookie(),
+}
 
 type tinyPngResult struct {
 	Input struct {
@@ -109,7 +113,8 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	getRequest.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
 	getRequest.Header.Set("Referer", "https://tinypng.com/")
 	getRequest.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15")
-	downloadRet, err := client.Do(getRequest)
+
+	downloadRet, err := downloadClient.Do(getRequest)
 	if err != nil {
 		return string(body), err
 	}
