@@ -18,11 +18,11 @@ func newCookie() *cookiejar.Jar {
 }
 
 var client = &http.Client{
-	Timeout: 30 * time.Second, // timeout -> 30秒
+	Timeout: 5 * time.Minute, // timeout -> 30秒
 	Jar:     newCookie(),
 }
 var downloadClient = &http.Client{
-	Timeout: 30 * time.Second, // timeout -> 30秒
+	Timeout: 10 * time.Minute, // timeout -> 30秒
 	Jar:     newCookie(),
 }
 
