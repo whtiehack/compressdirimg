@@ -56,12 +56,15 @@ func compressAllFile(pathname string) {
 
 func main() {
 	dir := flag.String("dir", "", "set dir")
+	skipCompressAll := flag.Bool("skipCompressAll", false, "skip compress all file")
 	flag.Parse()
 	if *dir == "" {
 		log.Fatalln("no dir")
 	}
 	log.Println("watch dir:", *dir)
-	compressAllFile(*dir)
+	if !*skipCompressAll {
+		compressAllFile(*dir)
+	}
 	w := watcher.New()
 	// Only notify rename and move events.
 	w.FilterOps(nil)
