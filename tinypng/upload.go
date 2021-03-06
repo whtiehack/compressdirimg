@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -47,6 +49,22 @@ var uploadMutx sync.Mutex
 
 var prevTime time.Time
 
+var defaultAddress = "https://tinypng.com"
+var backAddress = ""
+
+var UseBackAddress = false
+
+func init() {
+	backAddress = os.Getenv("TINY_PNG_BACKUP")
+}
+
+func getNowAddress() string {
+	if UseBackAddress && backAddress != "" {
+		return backAddress
+	}
+	return defaultAddress
+}
+
 func upload(r io.Reader, w io.Writer) (string, error) {
 	uploadMutx.Lock()
 	uploadMutx.Unlock()
@@ -72,7 +90,7 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	}()
 
 	// 上传图片文件
-	post, err := http.NewRequest("POST", "https://tinypng.com/web/shrink", r)
+	post, err := http.NewRequest("POST", getNowAddress()+"/web/shrink", r)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +122,9 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	if data.Output.URL == "" {
 		return string(body), errors.New("result without url..~~")
 	}
-	getRequest, err := http.NewRequest("GET", data.Output.URL, nil)
+	tmpDownloadUrl := data.Output.URL
+	tmpDownloadUrl = strings.Replace(tmpDownloadUrl, defaultAddress, getNowAddress(), 1)
+	getRequest, err := http.NewRequest("GET", tmpDownloadUrl, nil)
 	if err != nil {
 		return "", err
 	}

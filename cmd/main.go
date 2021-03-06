@@ -129,11 +129,14 @@ func uploadProcess(event watcher.Event) {
 			if tryCount > 4 {
 				log.Println("try count > 4", event.Path)
 				break
+			} else if tryCount == 1 {
+				tinypng.UseBackAddress = true
 			}
 			time.Sleep(30 * time.Second)
 			tryCount++
 			continue
 		}
+		tinypng.UseBackAddress = false
 		fi, err := os.Stat(event.Path)
 		if err == nil {
 			event.FileInfo = fi
