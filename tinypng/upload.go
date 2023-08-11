@@ -59,7 +59,7 @@ func init() {
 }
 
 func getNowAddress() string {
-	if UseBackAddress && backAddress != "" {
+	if UseBackAddress && backAddress != "" && !strings.Contains(backAddress, ".ml") {
 		return backAddress
 	}
 	return defaultAddress
@@ -90,7 +90,7 @@ func upload(r io.Reader, w io.Writer) (string, error) {
 	}()
 
 	// 上传图片文件
-	post, err := http.NewRequest("POST", getNowAddress()+"/web/shrink", r)
+	post, err := http.NewRequest("POST", getNowAddress()+"/backend/opt/shrink", r)
 	if err != nil {
 		return "", err
 	}

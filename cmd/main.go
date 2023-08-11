@@ -56,7 +56,7 @@ func compressAllFile(pathname string) {
 
 func main() {
 	dir := flag.String("dir", "", "set dir")
-	skipCompressAll := flag.Bool("skipCompressAll", false, "skip compress all file")
+	skipCompressAll := flag.Bool("skipCompressAll", false, "skip compress all file when program start")
 	flag.Parse()
 	if *dir == "" {
 		log.Fatalln("no dir")
