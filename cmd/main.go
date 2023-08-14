@@ -25,10 +25,10 @@ func compressAllFile(pathname string) {
 	zt := time.Now().AddDate(0, 0, -20)
 	for _, fi := range rd {
 		if fi.IsDir() {
-			log.Printf("[%s]\n", pathname+"/"+fi.Name())
+			log.Printf("compressAllFile:[%s]\n", pathname+"/"+fi.Name())
 			compressAllFile(pathname + "/" + fi.Name())
 		} else {
-			log.Println(pathname, fi.Name())
+			log.Println("compressAllFile:", pathname, fi.Name())
 			// ignore large file and small file.
 			if fi.Size() > MaxFileSize || fi.Size() <= 10000 || fi.ModTime().Before(zt) {
 				continue
